@@ -4,56 +4,9 @@ from typing import Optional, Tuple, Dict, Any
 
 
 class VideoCompressor(object):
-    class Size:
-        s144p   = 0
-        s240p   = 1
-        s360p   = 2
-        s480p   = 3
-        s720p   = 4 # HD
-        s1080p  = 5 # FHD
-        s1440p  = 6 # 2K/QHD
-        s2160p  = 7 # 4K UHD
-
-
-    class BitratePreset:
-        very_fast   = 0
-        fast        = 1
-        medium      = 2
-        slow        = 3
-
-
-    class AudioBitratePreset:
-        very_low    = 0 # 64  - Mono lessons, podcasts, streams.
-        low         = 1 # 96  - Stereo lessons, podcasts, streams.
-        base        = 2 # 128 - Web and social platforms (YouTube, TikTok and other).
-        medium      = 3 # 192 - Music and videogames sounds.
-        high        = 4 # 256 - Music and videogames sounds.
-        very_high   = 5 # 320 - Studio music.
-        extra_high  = 6 # 640 - Music arhives and studio music.
-
-
-    class CompressionQuality:
-        extra_low   = 0 # 28 - Extra low flie size, can obtain visible video artifacts.
-        low         = 1 # 25 - Low quality and file size.
-        medium      = 2 # 23 - Best balance quality/file size.
-        high        = 3 # 18 - High quality and file size.
-    
-
-    class CodingSpeed:
-        very_slow   = 0
-        slower      = 1
-        slow        = 2
-        medium      = 3
-        fast        = 4
-        faster      = 5
-        very_fast   = 6
-        super_fast  = 7
-        ultra_fast  = 8
-        
-
     def __init__(self):
         self.size = VideoCompressor.Size.s720p
-        self.video_bitrate_preset = VideoCompressor.BitratePreset.medium
+        self.video_bitrate_preset = VideoCompressor.VideoBitratePreset.medium
         self.audio_bitrate_preset = VideoCompressor.AudioBitratePreset.base
         self.compression_quality = VideoCompressor.CompressionQuality.medium
         self.coding_speed = VideoCompressor.CodingSpeed.fast
@@ -76,6 +29,36 @@ class VideoCompressor(object):
         self.preset = self.get_preset_by_coding_speed(self.coding_speed)
 
 
+# --- Setters ---
+    def set_size(self, size):
+        self.size = size
+        self.max_height = self.get_height(self.size)
+        self.max_width = self.get_width(self.size)
+
+
+    def set_video_bitrate(self, video_bitrate):
+        self.video_bitrate_preset = video_bitrate
+        self.video_bitrate = self.get_video_bitrate_by_preset(
+            self.video_bitrate_preset, self.size)
+
+
+    def set_audio_bitrate(self, audio_bitrate):
+        self.audio_bitrate_preset = audio_bitrate
+        self.audio_bitrate = self.get_audio_bitrate_by_preset(
+            self.audio_bitrate_preset)
+        
+
+    def set_compression_quality(self, crf):
+        self.compression_quality = crf
+        self.crf = self.get_crf_by_compression_quality(self.compression_quality)
+
+
+    def set_coding_speed(self, preset):
+        self.coding_speed = preset
+        self.preset = self.get_preset_by_coding_speed(self.coding_speed)
+
+
+# --- Getters ---
     def get_height(self, size):
         """Return video width value for size options."""
         heights = {
@@ -108,10 +91,10 @@ class VideoCompressor(object):
 
     def _get_preset_key(self, preset):
         preset_key = {
-            VideoCompressor.BitratePreset.very_fast:    'veryfast',
-            VideoCompressor.BitratePreset.fast:         'fast',
-            VideoCompressor.BitratePreset.medium:       'medium',
-            VideoCompressor.BitratePreset.slow:         'slow'
+            VideoCompressor.VideoBitratePreset.very_fast:    'veryfast',
+            VideoCompressor.VideoBitratePreset.fast:         'fast',
+            VideoCompressor.VideoBitratePreset.medium:       'medium',
+            VideoCompressor.VideoBitratePreset.slow:         'slow'
         }
         return preset_key[preset]
 
@@ -215,20 +198,131 @@ class VideoCompressor(object):
         return options
 
 
-    def print_options(self):
-        print(f"\nCompressing settings:")
-        print(f"  Video size: {self.max_height}p")
-        print(f"  Audio bitrate: {self.audio_bitrate}")
-        print(f"  Compressing quality (CRF): {self.crf}")
-        print(f"  Preset: {self.preset}")
+# --- Getters for dictionaries --- 
+    def get_sizes_dict():
+        sizes = {
+            "144p": VideoCompressor.Size.s144p,
+            "240p": VideoCompressor.Size.s240p,
+            "360p": VideoCompressor.Size.s360p,
+            "480p": VideoCompressor.Size.s480p,
+            "720p (HD)": VideoCompressor.Size.s720p,
+            "1080p (FHD)": VideoCompressor.Size.s1080p,
+            "1440p (2K/QHD)": VideoCompressor.Size.s1440p,
+            "2160p (4K UHD)": VideoCompressor.Size.s2160p,
+        }
+        return sizes
 
 
-    def compress_fast(self, input_path, output_path):
-        self._compress(input_path, output_path, True)
+    def get_video_bitrate_preset_dict():
+        preset = {
+            "Very fast": VideoCompressor.VideoBitratePreset.very_fast,
+            "Fast": VideoCompressor.VideoBitratePreset.fast,
+            "Medium": VideoCompressor.VideoBitratePreset.medium,
+            "Slow": VideoCompressor.VideoBitratePreset.slow,
+        }
+        return preset
+
+
+    def get_audio_bitrate_preset_dict():
+        preset = {
+            "Very low (mono lessons, podcasts, streams)": VideoCompressor.AudioBitratePreset.very_low,
+            "Low (steero lessons, podcasts, streams)": VideoCompressor.AudioBitratePreset.low,
+            "Base (web and social platforms as YouTube, TikTok and other)": VideoCompressor.AudioBitratePreset.base,
+            "Medium (music and videogames sounds)": VideoCompressor.AudioBitratePreset.medium,
+            "High (music and videogames sounds)": VideoCompressor.AudioBitratePreset.high,
+            "Very high (studio music)": VideoCompressor.AudioBitratePreset.very_high,
+            "Extra high (musical arhives and studio music)": VideoCompressor.AudioBitratePreset.extra_high,
+        }
+        return preset
+
+
+    def get_compression_quality_dict():
+        quality = {
+            "Extra low (extra low flie size, can obtain visible video artifacts)": VideoCompressor.CompressionQuality.extra_low,
+            "Low (low quality and file size)": VideoCompressor.CompressionQuality.low,
+            "Medium (best balance quality/file size)": VideoCompressor.CompressionQuality.medium, 
+            "High (high quality and file size)": VideoCompressor.CompressionQuality.high,
+        }
+        return quality
+
+
+    def get_coding_speed_dict():
+        speed = {
+            "Very slow": VideoCompressor.CodingSpeed.very_slow,
+            "Slower": VideoCompressor.CodingSpeed.slower,
+            "Slow": VideoCompressor.CodingSpeed.slow,
+            "Medium": VideoCompressor.CodingSpeed.medium,
+            "Fast": VideoCompressor.CodingSpeed.fast,
+            "Faster": VideoCompressor.CodingSpeed.faster,
+            "Very fast": VideoCompressor.CodingSpeed.very_fast,
+            "Super fast": VideoCompressor.CodingSpeed.super_fast,
+            "Ultra fast": VideoCompressor.CodingSpeed.ultra_fast,
+        }
+        return speed
+
+
+# --- Main processing functions ---
+    def compress(self, input_path, output_path, soft_compress=True):
+        input_file = Path(input_path)
+
+        # Get actual video sizes.
+        width, height = self._get_video_dimensions(input_path)
+        if self._is_compression_necessary(width, height):
+            print("Видео уже имеет требуемое разрешение или меньше")
+            return
+        new_width, new_height = self._recalculate_size(width, height)
+
+        # Duplicate file.
+        output_file = self._duplicate_input_file(input_path, output_path)
+
+        # Get ffmpeg command.
+        cmd = self._get_ffmpeg_command(input_path, output_path, new_width, new_height)
+
+        # Information output.
+        self.print_options()
+        print(f"  Original video sizes:   {width}x{height}")
+        print(f"  Compressed video sizes: {new_width}x{new_height}")
+        print(f"  ffmpeg command:")
+        print('  '.join(cmd[:10]) + ' ... ' + ' '.join(cmd[-3:]))
+        print()
+    
+        # Start of compressing.
+        if soft_compress:
+            process_priority = subprocess.IDLE_PRIORITY_CLASS
+        else:
+            process_priority = subprocess.NORMAL_PRIORITY_CLASS
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            encoding='utf-8',
+            errors='replace',
+            creationflags=process_priority
+        )
         
+        # Читаем вывод в реальном времени
+        while True:
+            output = process.stdout.readline()
+            if output == '' and process.poll() is not None:
+                break
+            if output:
+                # Выводим только важные строки
+                if any(keyword in output.lower() for keyword in 
+                        ['frame=', 'fps=', 'time=', 'bitrate=', 'speed=']):
+                    print(output.strip())
+        # Ждем завершения
+        return_code = process.wait()
+        
+        # Errors check.
+        if return_code != 0:
+            raise Exception(f"ffmpeg finished work with error code {return_code}.")
+        if not output_file.exists():
+            raise FileNotFoundError(f"Ошибка: Выходной файл не создан")
 
-    def compress_economic(self, input_path, output_path):
-        self._compress(input_path, output_path, False)
+        # Information output.
+        print(f"\nCompression succesfuly finished!")
+        self._print_compression_info(input_file, output_file)
 
 
     def _get_video_dimensions(self, file: str) -> Tuple[Optional[int], Optional[int]]:
@@ -287,70 +381,9 @@ class VideoCompressor(object):
         return Path(output_path)
 
 
-    def _compress(self, input_path, output_path, fast):
-        input_file = Path(input_path)
-
-        # Get actual video sizes.
-        width, height = self._get_video_dimensions(input_path)
-        if self._is_compression_necessary(width, height):
-            print("Видео уже имеет требуемое разрешение или меньше")
-            return
-        new_width, new_height = self._recalculate_size(width, height)
-
-        # Duplicate file.
-        output_file = self._duplicate_input_file(input_path, output_path)
-
-        # Get ffmpeg command.
-        if fast:
-            cmd = self._get_ffmpeg_command_fast(input_path, output_path, new_width, new_height)
-        else:
-            cmd = self._get_ffmpeg_command_economic(input_path, output_path, new_width, new_height)
-
-        # Information output.
-        self.print_options()
-        print(f"  Original video sizes:   {width}x{height}")
-        print(f"  Compressed video sizes: {new_width}x{new_height}")
-        print(f"  ffmpeg command:")
-        print('  '.join(cmd[:10]) + ' ... ' + ' '.join(cmd[-3:]))
-        print()
-    
-        # Start of compressing.
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            universal_newlines=True,
-            encoding='utf-8',
-            errors='replace'
-        )
-        
-        # Читаем вывод в реальном времени
-        while True:
-            output = process.stdout.readline()
-            if output == '' and process.poll() is not None:
-                break
-            if output:
-                # Выводим только важные строки
-                if any(keyword in output.lower() for keyword in 
-                        ['frame=', 'fps=', 'time=', 'bitrate=', 'speed=']):
-                    print(output.strip())
-        # Ждем завершения
-        return_code = process.wait()
-        
-        # Errors check.
-        if return_code != 0:
-            raise Exception(f"ffmpeg finished work with error code {return_code}.")
-        if not output_file.exists():
-            raise FileNotFoundError(f"Ошибка: Выходной файл не создан")
-
-        # Information output.
-        print(f"\nCompression succesfuly finished!")
-        self._print_compression_info(input_file, output_file)
-
-
-    def _get_ffmpeg_command_fast(self, input_path, output_path, new_width, new_height):
+    def _get_ffmpeg_command(self, input_path, output_path, new_width, new_height):
         # Build ffmpeg command.
-        cmd= [
+        cmd = [
             'ffmpeg',
             '-i', input_path,
             '-vf', f'scale={new_width}:{new_height}:flags=lanczos',  # lanczos для лучшего качества
@@ -378,93 +411,59 @@ class VideoCompressor(object):
 
         return cmd
 
+
+# --- Info functions ---
+    def print_options(self):
+        print(f"\nCompressing settings:")
+        print(f"  Video size: {self.max_height}p")
+        print(f"  Audio bitrate: {self.audio_bitrate}")
+        print(f"  Compressing quality (CRF): {self.crf}")
+        print(f"  Preset: {self.preset}")
+
+
+# --- Options classes ---
+    class Size:
+        s144p   = 0
+        s240p   = 1
+        s360p   = 2
+        s480p   = 3
+        s720p   = 4 # HD
+        s1080p  = 5 # FHD
+        s1440p  = 6 # 2K/QHD
+        s2160p  = 7 # 4K UHD
+
+
+    class VideoBitratePreset:
+        very_fast   = 0
+        fast        = 1
+        medium      = 2
+        slow        = 3
+
+
+    class AudioBitratePreset:
+        very_low    = 0 # 64  - Mono lessons, podcasts, streams.
+        low         = 1 # 96  - Stereo lessons, podcasts, streams.
+        base        = 2 # 128 - Web and social platforms (YouTube, TikTok and other).
+        medium      = 3 # 192 - Music and videogames sounds.
+        high        = 4 # 256 - Music and videogames sounds.
+        very_high   = 5 # 320 - Studio music.
+        extra_high  = 6 # 640 - Music arhives and studio music.
+
+
+    class CompressionQuality:
+        extra_low   = 0 # 28 - Extra low flie size, can obtain visible video artifacts.
+        low         = 1 # 25 - Low quality and file size.
+        medium      = 2 # 23 - Best balance quality/file size.
+        high        = 3 # 18 - High quality and file size.
     
-    def _get_ffmpeg_command_economic(self, input_path, output_path, new_width, new_height):
-        # Build ffmpeg command.
-        cmd = [
-            'ffmpeg',
-            '-i', input_path,
-            '-vf', f'scale={new_width}:{new_height}:flags=lanczos',
-            '-c:v', 'libx264',
-            '-preset', self.preset,
-            '-b:v', self.video_bitrate,
-            '-maxrate', str(int(self.video_bitrate.replace('k', '')) * 2) + 'k',  # Ограничение пикового битрейта
-            '-bufsize', str(int(self.video_bitrate.replace('k', '')) * 4) + 'k',  # Размер буфера
-            '-profile:v', 'high',
-            '-level', '4.0',
-            '-c:a', 'aac',
-            '-b:a', self.audio_bitrate,
-            '-threads', '4',
-            '-movflags', '+faststart',
-            '-max_muxing_queue_size', '1024',
-        ]
-        # Опция перезаписи
-        if self.overwrite:
-            cmd.append('-y')
-        else:
-            cmd.append('-n')
-        # Выходной файл
-        cmd.append(output_path)
-        return cmd
 
-
-    def get_sizes_dict():
-        sizes = {
-            "144p": VideoCompressor.Size.s144p,
-            "240p": VideoCompressor.Size.s240p,
-            "360p": VideoCompressor.Size.s360p,
-            "480p": VideoCompressor.Size.s480p,
-            "720p (HD)": VideoCompressor.Size.s720p,
-            "1080p (FHD)": VideoCompressor.Size.s1080p,
-            "1440p (2K/QHD)": VideoCompressor.Size.s1440p,
-            "2160p (4K UHD)": VideoCompressor.Size.s2160p,
-        }
-        return sizes
-
-
-    def get_video_bitrate_preset_dict():
-        preset = {
-            "Very fast": VideoCompressor.BitratePreset.very_fast,
-            "Fast": VideoCompressor.BitratePreset.fast,
-            "Medium": VideoCompressor.BitratePreset.medium,
-            "Slow": VideoCompressor.BitratePreset.slow,
-        }
-        return preset
-
-
-    def get_audio_bitrate_preset_dict():
-        preset = {
-            "Very low (mono lessons, podcasts, streams)": VideoCompressor.AudioBitratePreset.very_low,
-            "Low (steero lessons, podcasts, streams)": VideoCompressor.AudioBitratePreset.low,
-            "Base (web and social platforms as YouTube, TikTok and other)": VideoCompressor.AudioBitratePreset.base,
-            "Medium (music and videogames sounds)": VideoCompressor.AudioBitratePreset.medium,
-            "High (music and videogames sounds)": VideoCompressor.AudioBitratePreset.high,
-            "Very high (studio music)": VideoCompressor.AudioBitratePreset.very_high,
-            "Extra high (musical arhives and studio music)": VideoCompressor.AudioBitratePreset.extra_high,
-        }
-        return preset
-
-
-    def get_compression_quality_dict():
-        quality = {
-            "Extra low (extra low flie size, can obtain visible video artifacts)": VideoCompressor.CompressionQuality.extra_low,
-            "Low (low quality and file size)": VideoCompressor.CompressionQuality.low,
-            "Medium (best balance quality/file size)": VideoCompressor.CompressionQuality.medium, 
-            "High (high quality and file size)": VideoCompressor.CompressionQuality.high,
-        }
-        return quality
-
-
-    def get_coding_speed_dict():
-        speed = {
-            "Very slow": VideoCompressor.CodingSpeed.very_slow,
-            "Slower": VideoCompressor.CodingSpeed.slower,
-            "Slow": VideoCompressor.CodingSpeed.slow,
-            "Medium": VideoCompressor.CodingSpeed.medium,
-            "Fast": VideoCompressor.CodingSpeed.fast,
-            "Faster": VideoCompressor.CodingSpeed.faster,
-            "Very fast": VideoCompressor.CodingSpeed.very_fast,
-            "Super fast": VideoCompressor.CodingSpeed.super_fast,
-            "Ultra fast": VideoCompressor.CodingSpeed.ultra_fast,
-        }
-        return speed
+    class CodingSpeed:
+        very_slow   = 0
+        slower      = 1
+        slow        = 2
+        medium      = 3
+        fast        = 4
+        faster      = 5
+        very_fast   = 6
+        super_fast  = 7
+        ultra_fast  = 8
