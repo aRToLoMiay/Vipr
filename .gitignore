@@ -1,7 +1,7 @@
 # Build dirrectory
-/console_menu/.vs/
-/console_menu/__pycache__/
-/console_menu/env/
+/.vs/
+/__pycache__/
+/env/
 
 # Testing files
 /console_menu/_result
